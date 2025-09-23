@@ -1,0 +1,3 @@
+Hacer readme
+hacer un postman 
+Hacer el request
