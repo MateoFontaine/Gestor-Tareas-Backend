@@ -1,12 +1,20 @@
 import { Router } from "express";
-import { UserController } from "../controllers/UserController";
 
 const router = Router();
 
-// GET /users - Obtener todos los usuarios
-router.get("/", UserController.getAll);
+router.get("/", (req, res) => {
+  res.json({ message: "GET / funciona" });
+});
 
-// POST /users - Crear un nuevo usuario
-router.post("/", UserController.create);
+router.get("/test", (req, res) => {
+  res.json({ message: "GET /test funciona" });
+});
+
+router.get("/:id", (req, res) => {
+  res.json({ 
+    message: "GET /:id funciona", 
+    id: req.params.id 
+  });
+});
 
 export default router;

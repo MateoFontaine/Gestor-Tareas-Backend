@@ -1,70 +1,18 @@
 import { Request, Response } from "express";
-import { AppDataSource } from "../config/database";
-import { TeamMembership, MemberRole } from "../entities/TeamMembership";
-import { User } from "../entities/User";
-import { Team } from "../entities/Team";
+import { TeamMembershipService } from "../services/TeamMembershipService";
 
 export class TeamMembershipController {
-  // Agregar usuario a un equipo
+  // Agregar usuario a equipo
   static async addMember(req: Request, res: Response) {
     try {
-      const { userId, teamId, role = MemberRole.MEMBER } = req.body;
-      
-      const membershipRepository = AppDataSource.getRepository(TeamMembership);
-      const userRepository = AppDataSource.getRepository(User);
-      const teamRepository = AppDataSource.getRepository(Team);
-      
-      // Verificar que el usuario existe
-      const user = await userRepository.findOne({ where: { id: userId } });
-      if (!user) {
-        return res.status(404).json({
-          message: "Usuario no encontrado"
-        });
-      }
-
-      // Verificar que el equipo existe
-      const team = await teamRepository.findOne({ where: { id: teamId } });
-      if (!team) {
-        return res.status(404).json({
-          message: "Equipo no encontrado"
-        });
-      }
-
-      // Verificar si ya es miembro
-      const existingMembership = await membershipRepository.findOne({
-        where: { userId, teamId }
-      });
-      
-      if (existingMembership) {
-        return res.status(400).json({
-          message: "El usuario ya es miembro de este equipo"
-        });
-      }
-
-      // Crear nueva membresía
-      const newMembership = membershipRepository.create({
-        userId,
-        teamId,
-        role
-      });
-
-      // Guardar en la base de datos
-      const savedMembership = await membershipRepository.save(newMembership);
-      
-      // Obtener con relaciones
-      const membershipWithRelations = await membershipRepository.findOne({
-        where: { id: savedMembership.id },
-        relations: ["user", "team"]
-      });
-      
+      const membership = await TeamMembershipService.addMember(req.body);
       res.status(201).json({
         message: "Usuario agregado al equipo correctamente",
-        data: membershipWithRelations
+        data: membership
       });
     } catch (error) {
-      res.status(500).json({
-        message: "Error al agregar usuario al equipo",
-        error
+      res.status(400).json({
+        message: error instanceof Error ? error.message : "Error desconocido"
       });
     }
   }
@@ -73,24 +21,22 @@ export class TeamMembershipController {
   static async getTeamMembers(req: Request, res: Response) {
     try {
       const { teamId } = req.params;
-      
-      const membershipRepository = AppDataSource.getRepository(TeamMembership);
-      
-      const members = await membershipRepository.find({
-        where: { teamId: parseInt(teamId) },
-        relations: ["user", "team"],
-        order: { joinedAt: "ASC" }
-      });
-      
+      const members = await TeamMembershipService.getTeamMembers(parseInt(teamId));
       res.json({
         message: "Miembros del equipo obtenidos correctamente",
         data: members
       });
     } catch (error) {
-      res.status(500).json({
-        message: "Error al obtener miembros del equipo",
-        error
-      });
+      if (error instanceof Error && error.message === "Equipo no encontrado") {
+        res.status(404).json({
+          message: error.message
+        });
+      } else {
+        res.status(500).json({
+          message: "Error al obtener miembros del equipo",
+          error: error instanceof Error ? error.message : "Error desconocido"
+        });
+      }
     }
   }
 
@@ -98,24 +44,22 @@ export class TeamMembershipController {
   static async getUserTeams(req: Request, res: Response) {
     try {
       const { userId } = req.params;
-      
-      const membershipRepository = AppDataSource.getRepository(TeamMembership);
-      
-      const teams = await membershipRepository.find({
-        where: { userId: parseInt(userId) },
-        relations: ["user", "team"],
-        order: { joinedAt: "DESC" }
-      });
-      
+      const teams = await TeamMembershipService.getUserTeams(parseInt(userId));
       res.json({
         message: "Equipos del usuario obtenidos correctamente",
         data: teams
       });
     } catch (error) {
-      res.status(500).json({
-        message: "Error al obtener equipos del usuario",
-        error
-      });
+      if (error instanceof Error && error.message === "Usuario no encontrado") {
+        res.status(404).json({
+          message: error.message
+        });
+      } else {
+        res.status(500).json({
+          message: "Error al obtener equipos del usuario",
+          error: error instanceof Error ? error.message : "Error desconocido"
+        });
+      }
     }
   }
 }

@@ -10,15 +10,17 @@ export const AppDataSource = new DataSource({
   host: "localhost",
   port: 5432,
   username: "postgres",
-  password: "Mateo200430", // ← CAMBIÁ ESTO por tu contraseña
+  password: "Mateo200430",
   database: "gestor_tareas",
-  synchronize: true, // ← Esto crea las tablas automáticamente (solo para desarrollo)
-  logging: true, // ← Para ver las consultas SQL en la consola
+  synchronize: false, // ← CAMBIO: ahora usamos migraciones
+  logging: true,
   entities: [
     User,
     Team,
     Task,
     Comment,
-    TeamMembership, // ← Agregamos la entidad User
+    TeamMembership,
   ],
+  migrations: ["src/migrations/*.ts"], // ← Carpeta de migraciones
+  migrationsRun: true, // ← Ejecuta migraciones automáticamente al iniciar
 });

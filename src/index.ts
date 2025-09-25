@@ -22,6 +22,8 @@ app.get("/", (req, res) => {
   res.json({ message: "¡Gestor de Tareas API funcionando!" });
 });
 
+
+
 // Rutas de usuarios
 app.use("/users", userRoutes);
 
