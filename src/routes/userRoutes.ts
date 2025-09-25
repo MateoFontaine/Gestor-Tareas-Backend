@@ -1,20 +1,10 @@
 import { Router } from "express";
+import { UserController } from "../controllers/UserController";
 
 const router = Router();
 
-router.get("/", (req, res) => {
-  res.json({ message: "GET / funciona" });
-});
-
-router.get("/test", (req, res) => {
-  res.json({ message: "GET /test funciona" });
-});
-
-router.get("/:id", (req, res) => {
-  res.json({ 
-    message: "GET /:id funciona", 
-    id: req.params.id 
-  });
-});
+router.get("/", UserController.getAll);
+router.post("/", UserController.create);
+router.get("/:id", UserController.getById);
 
 export default router;

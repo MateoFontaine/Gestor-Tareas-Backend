@@ -1,4 +1,12 @@
-### ============= USUARIOS =============
+### ============= RUTAS BÁSICAS =============
+
+### Verificar que el servidor funciona
+GET http://localhost:3000/
+
+### Verificar conexión a BD
+GET http://localhost:3000/test-db
+
+### ============= USUARIOS (CRUD) =============
 
 ### Obtener todos los usuarios
 GET http://localhost:3000/users
@@ -8,202 +16,111 @@ POST http://localhost:3000/users
 Content-Type: application/json
 
 {
-  "email": "nuevo@test.com",
+  "email": "admin@gestor.com",
   "password": "123456",
-  "firstName": "Nuevo",
-  "lastName": "Usuario"
+  "firstName": "Admin",
+  "lastName": "Sistema"
 }
 
-### Probar validación: Email duplicado (debería dar error)
+### Crear segundo usuario
 POST http://localhost:3000/users
 Content-Type: application/json
 
 {
-  "email": "nuevo@test.com",
+  "email": "dev@gestor.com",
+  "password": "123456",
+  "firstName": "Developer",
+  "lastName": "Team"
+}
+
+### Validación: Email duplicado (debería dar error)
+POST http://localhost:3000/users
+Content-Type: application/json
+
+{
+  "email": "admin@gestor.com",
   "password": "123456",
   "firstName": "Duplicado",
   "lastName": "Usuario"
 }
 
-### Probar validación: Email inválido (debería dar error)
-POST http://localhost:3000/users
-Content-Type: application/json
-
-{
-  "email": "email-malosss",
-  "password": "123456",
-  "firstName": "Test",
-  "lastName": "User"
-}
-
-### ============= EQUIPOS =============
+### ============= EQUIPOS (CRUD + Reglas de Borrado) =============
 
 ### Obtener todos los equipos
 GET http://localhost:3000/teams
 
-### Crear equipo válido
+### Crear equipo de desarrollo
 POST http://localhost:3000/teams
 Content-Type: application/json
 
 {
-  "name": "Equipo de Desarrollo",
-  "description": "Equipo para desarrollar la aplicación",
+  "name": "Equipo Frontend",
+  "description": "Desarrollo de interfaces",
   "ownerId": 1
 }
 
-### Probar validación: Propietario inexistente (debería dar error)
+### Crear equipo backend
 POST http://localhost:3000/teams
 Content-Type: application/json
 
 {
-  "name": "Equipo Test",
-  "description": "Test",
+  "name": "Equipo Backend",
+  "description": "Desarrollo de APIs",
+  "ownerId": 1
+}
+
+### Crear equipo para eliminar (sin tareas)
+POST http://localhost:3000/teams
+Content-Type: application/json
+
+{
+  "name": "Equipo Temporal",
+  "description": "Este equipo se puede eliminar",
+  "ownerId": 4
+}
+
+### Validación: Propietario inexistente (debería dar error)
+POST http://localhost:3000/teams
+Content-Type: application/json
+
+{
+  "name": "Equipo Error",
   "ownerId": 999
 }
 
-### ============= TAREAS =============
+### ============= MEMBRESÍAS (Alta/Baja/Gestión) =============
 
-### Obtener todas las tareas
-GET http://localhost:3000/tasks
-
-### Crear tarea válida
-POST http://localhost:3000/tasks
-Content-Type: application/json
-
-{
-  "title": "Configurar base de datos",
-  "description": "Setup PostgreSQL y TypeORM",
-  "teamId": 1,
-  "createdById": 1,
-  "assignedToId": 1,
-  "priority": "alta",
-  "dueDate": "2025-12-31"
-}
-
-### VALIDACIÓN: Fecha en el pasado (debería dar error)
-POST http://localhost:3000/tasks
-Content-Type: application/json
-
-{
-  "title": "Tarea con fecha mala",
-  "description": "Esta debería fallar",
-  "teamId": 1,
-  "createdById": 1,
-  "dueDate": "2020-01-01"
-}
-
-### Crear tarea sin usuario asignado (válido)
-POST http://localhost:3000/tasks
-Content-Type: application/json
-
-{
-  "title": "Tarea sin asignar",
-  "description": "Tarea para el equipo",
-  "teamId": 1,
-  "createdById": 1,
-  "priority": "media"
-}
-
-### TRANSICIÓN VÁLIDA: Pendiente → En curso
-PUT http://localhost:3000/tasks/1/status
-Content-Type: application/json
-
-{
-  "status": "en_curso"
-}
-
-### TRANSICIÓN VÁLIDA: En curso → Finalizada
-PUT http://localhost:3000/tasks/1/status
-Content-Type: application/json
-
-{
-  "status": "finalizada"
-}
-
-### TRANSICIÓN INVÁLIDA: Finalizada → Pendiente (debería dar error)
-PUT http://localhost:3000/tasks/1/status
-Content-Type: application/json
-
-{
-  "status": "pendiente"
-}
-
-### TRANSICIÓN VÁLIDA: Cualquier estado → Cancelada
-PUT http://localhost:3000/tasks/2/status
-Content-Type: application/json
-
-{
-  "status": "cancelada"
-}
-
-### ============= COMENTARIOS =============
-
-### Obtener todos los comentarios
-GET http://localhost:3000/comments
-
-### Crear comentario válido
-POST http://localhost:3000/comments
-Content-Type: application/json
-
-{
-  "content": "Excelente trabajo en esta tarea!",
-  "taskId": 1,
-  "authorId": 1
-}
-
-### Crear otro comentario
-POST http://localhost:3000/comments
-Content-Type: application/json
-
-{
-  "content": "Necesitamos revisar algunos detalles",
-  "taskId": 1,
-  "authorId": 1
-}
-
-### Probar validación: Tarea inexistente (debería dar error)
-POST http://localhost:3000/comments
-Content-Type: application/json
-
-{
-  "content": "Comentario en tarea que no existe",
-  "taskId": 999,
-  "authorId": 1
-}
-
-### ============= MEMBRESÍAS =============
-
-### Agregar usuario a equipo
+### Agregar usuario al equipo frontend
 POST http://localhost:3000/memberships
 Content-Type: application/json
 
 {
-  "userId": 1,
+  "userId": 6,
   "teamId": 1,
   "role": "miembro"
 }
 
-### Agregar otro usuario al mismo equipo
+### Agregar mismo usuario al equipo backend
+POST http://localhost:3000/memberships
+Content-Type: application/json
+
+{
+  "userId": 2,
+  "teamId": 2,
+  "role": "miembro"
+}
+
+### Validación: Usuario duplicado en mismo equipo (debería dar error)
 POST http://localhost:3000/memberships
 Content-Type: application/json
 
 {
   "userId": 2,
   "teamId": 1,
-  "role": "miembro"
-}
-
-### Probar validación: Usuario duplicado en equipo (debería dar error)
-POST http://localhost:3000/memberships
-Content-Type: application/json
-
-{
-  "userId": 1,
-  "teamId": 1,
   "role": "propietario"
 }
 
-### Probar validación: Usuario inexistente (debería dar error)
+### Validación: Usuario inexistente (debería dar error)
 POST http://localhost:3000/memberships
 Content-Type: application/json
 
@@ -213,40 +130,277 @@ Content-Type: application/json
   "role": "miembro"
 }
 
-### ============= PRUEBAS DE ELIMINACIÓN =============
+### ============= TAREAS (CRUD + Reglas de Negocio) =============
 
-### Crear equipo para eliminar (sin tareas)
-POST http://localhost:3000/teams
+### Obtener todas las tareas
+GET http://localhost:3000/tasks
+
+### Crear tarea pendiente
+POST http://localhost:3000/tasks
 Content-Type: application/json
 
 {
-  "name": "Equipo para eliminar",
-  "description": "Este equipo se puede eliminar",
-  "ownerId": 1
+  "title": "Configurar autenticación",
+  "description": "Implementar JWT y middleware de auth",
+  "teamId": 1,
+  "createdById": 4,
+  "assignedToId": 4,
+  "priority": "alta",
+  "dueDate": "2025-12-31"
 }
 
-### Eliminar equipo sin tareas activas (debería funcionar)
-DELETE http://localhost:3000/teams/2
+### Crear segunda tarea
+POST http://localhost:3000/tasks
+Content-Type: application/json
+
+{
+  "title": "Diseñar homepage",
+  "description": "Crear diseño de página principal",
+  "teamId": 1,
+  "createdById": 1,
+  "priority": "media",
+  "dueDate": "2025-11-30"
+}
+
+### Crear tarea sin asignar
+POST http://localhost:3000/tasks
+Content-Type: application/json
+
+{
+  "title": "Documentar API",
+  "description": "Crear documentación con Swagger",
+  "teamId": 2,
+  "createdById": 1,
+  "priority": "baja"
+}
+
+### REGLA DE NEGOCIO: Validación fecha pasada (debería dar error)
+POST http://localhost:3000/tasks
+Content-Type: application/json
+
+{
+  "title": "Tarea con fecha inválida",
+  "teamId": 1,
+  "createdById": 1,
+  "dueDate": "2020-01-01"
+}
+
+### ============= TRANSICIONES DE ESTADO (Reglas de Negocio) =============
+
+### VÁLIDA: Pendiente → En curso
+PUT http://localhost:3000/tasks/1
+Content-Type: application/json
+
+{
+  "status": "en_curso"
+}
+
+### VÁLIDA: En curso → Finalizada
+PUT http://localhost:3000/tasks/1
+Content-Type: application/json
+
+{
+  "status": "finalizada"
+}
+
+### INVÁLIDA: Finalizada → Pendiente (debería dar error)
+PUT http://localhost:3000/tasks/1
+Content-Type: application/json
+
+{
+  "status": "pendiente"
+}
+
+### INVÁLIDA: Intentar editar tarea finalizada (debería dar error)
+PUT http://localhost:3000/tasks/1
+Content-Type: application/json
+
+{
+  "title": "Intentando editar tarea finalizada",
+  "description": "Esto debería fallar"
+}
+
+### VÁLIDA: Cambiar segunda tarea a En curso
+PUT http://localhost:3000/tasks/2
+Content-Type: application/json
+
+{
+  "status": "en_curso"
+}
+
+### VÁLIDA: Cualquier estado → Cancelada
+PUT http://localhost:3000/tasks/3
+Content-Type: application/json
+
+{
+  "status": "cancelada"
+}
+
+### INVÁLIDA: Intentar editar tarea cancelada (debería dar error)
+PUT http://localhost:3000/tasks/2
+Content-Type: application/json
+
+{
+  "priority": "alta"
+}
+
+### ============= COMENTARIOS (Historial) =============
+
+### Obtener todos los comentarios
+GET http://localhost:3000/comments
+
+### Agregar comentario a tarea
+POST http://localhost:3000/comments
+Content-Type: application/json
+
+{
+  "content": "Tarea completada exitosamente. Implementación lista para review.",
+  "taskId": 1,
+  "authorId": 4
+}
+
+### Agregar comentario de seguimiento
+POST http://localhost:3000/comments
+Content-Type: application/json
+
+{
+  "content": "Review completado. Necesita ajustes menores en validaciones.",
+  "taskId": 1,
+  "authorId": 1
+}
+
+### Comentario en tarea cancelada
+POST http://localhost:3000/comments
+Content-Type: application/json
+
+{
+  "content": "Tarea cancelada por cambio en prioridades del proyecto.",
+  "taskId": 2,
+  "authorId": 1
+}
+
+### Validación: Comentario en tarea inexistente (debería dar error)
+POST http://localhost:3000/comments
+Content-Type: application/json
+
+{
+  "content": "Comentario en tarea que no existe",
+  "taskId": 999,
+  "authorId": 1
+}
+
+### ============= REGLAS DE BORRADO DE EQUIPOS =============
 
 ### Intentar eliminar equipo con tareas activas (debería dar error)
-DELETE http://localhost:3000/teams/1
+DELETE http://localhost:3000/teams/2
 
-### ============= RUTAS BÁSICAS =============
+### Eliminar equipo sin tareas (debería funcionar)
+DELETE http://localhost:3000/teams/3
 
-### Verificar que el servidor funciona
-GET http://localhost:3000/
+### ============= CASOS DE VALIDACIÓN ADICIONALES =============
 
-### Verificar conexión a BD
-GET http://localhost:3000/test-db
+### Crear tarea sin título (debería dar error)
+POST http://localhost:3000/tasks
+Content-Type: application/json
 
+{
+  "description": "Tarea sin título",
+  "teamId": 1,
+  "createdById": 1
+}
 
+### Crear tarea con equipo inexistente (debería dar error)
+POST http://localhost:3000/tasks
+Content-Type: application/json
 
+{
+  "title": "Tarea en equipo inexistente",
+  "teamId": 999,
+  "createdById": 1
+}
 
+### Crear tarea con creador inexistente (debería dar error)
+POST http://localhost:3000/tasks
+Content-Type: application/json
 
+{
+  "title": "Tarea con creador inexistente",
+  "teamId": 1,
+  "createdById": 999
+}
 
+### ============= FLUJO COMPLETO DE PRUEBA =============
 
+### 1. Crear nueva tarea para flujo completo
+POST http://localhost:3000/tasks
+Content-Type: application/json
 
+{
+  "title": "Prueba de flujo completo",
+  "description": "Tarea para probar todo el flujo de estados",
+  "teamId": 1,
+  "createdById": 1,
+  "assignedToId": 2,
+  "priority": "media",
+  "dueDate": "2025-12-15"
+}
 
+### 2. Comentar tarea recién creada
+POST http://localhost:3000/comments
+Content-Type: application/json
 
+{
+  "content": "Iniciando trabajo en esta tarea",
+  "taskId": 4,
+  "authorId": 2
+}
 
+### 3. Cambiar a en curso
+PUT http://localhost:3000/tasks/4
+Content-Type: application/json
 
+{
+  "status": "en_curso"
+}
+
+### 4. Comentar progreso
+POST http://localhost:3000/comments
+Content-Type: application/json
+
+{
+  "content": "50% completado, todo va según lo planeado",
+  "taskId": 4,
+  "authorId": 2
+}
+
+### 5. Finalizar tarea
+PUT http://localhost:3000/tasks/4
+Content-Type: application/json
+
+{
+  "status": "finalizada"
+}
+
+### 6. Comentario final
+POST http://localhost:3000/comments
+Content-Type: application/json
+
+{
+  "content": "Tarea completada y revisada. Lista para producción.",
+  "taskId": 4,
+  "authorId": 1
+}
+
+### ============= VERIFICACIONES FINALES =============
+
+### Ver todas las tareas con sus estados
+GET http://localhost:3000/tasks
+
+### Ver todos los comentarios del sistema
+GET http://localhost:3000/comments
+
+### Ver todos los equipos
+GET http://localhost:3000/teams
+
+### Ver todas las membresías
+GET http://localhost:3000/memberships

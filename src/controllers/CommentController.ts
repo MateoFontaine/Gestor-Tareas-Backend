@@ -2,7 +2,6 @@ import { Request, Response } from "express";
 import { CommentService } from "../services/CommentService";
 
 export class CommentController {
-  // Crear un nuevo comentario
   static async create(req: Request, res: Response) {
     try {
       const comment = await CommentService.create(req.body);
@@ -17,7 +16,6 @@ export class CommentController {
     }
   }
 
-  // Obtener comentarios de una tarea específica
   static async getByTask(req: Request, res: Response) {
     try {
       const { taskId } = req.params;
@@ -40,7 +38,6 @@ export class CommentController {
     }
   }
 
-  // Obtener todos los comentarios
   static async getAll(req: Request, res: Response) {
     try {
       const comments = await CommentService.getAll();
@@ -53,6 +50,41 @@ export class CommentController {
         message: "Error al obtener comentarios",
         error: error instanceof Error ? error.message : "Error desconocido"
       });
+    }
+  }
+
+  static async getById(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const comment = await CommentService.getById(parseInt(id));
+      res.json({
+        message: "Comentario obtenido correctamente",
+        data: comment
+      });
+    } catch (error) {
+      res.status(404).json({
+        message: error instanceof Error ? error.message : "Error desconocido"
+      });
+    }
+  }
+
+  static async delete(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const result = await CommentService.delete(parseInt(id));
+      res.json({
+        message: "Comentario eliminado correctamente",
+        data: result
+      });
+    } catch (error) {
+      if (error instanceof Error && error.message === "Comentario no encontrado") {
+        res.status(404).json({ message: error.message });
+      } else {
+        res.status(500).json({
+          message: "Error al eliminar comentario",
+          error: error instanceof Error ? error.message : "Error desconocido"
+        });
+      }
     }
   }
 }

@@ -4,13 +4,11 @@ import { User } from "../entities/User";
 export class UserService {
   private static userRepository = AppDataSource.getRepository(User);
 
-  // Obtener todos los usuarios
   static async getAll(): Promise<User[]> {
     return await this.userRepository.find();
   }
 
-  // Crear un nuevo usuario
-  static async create(userData: {   
+  static async create(userData: {
     email: string;
     password: string;
     firstName: string;
@@ -18,27 +16,23 @@ export class UserService {
   }): Promise<User> {
     const { email, password, firstName, lastName } = userData;
 
-    // Validar que todos los campos están presentes
     if (!email || !password || !firstName || !lastName) {
       throw new Error("Todos los campos son obligatorios");
     }
 
-    // Validar formato de email básico
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       throw new Error("El formato del email no es válido");
     }
 
-    // Verificar que el email no existe
     const existingUser = await this.userRepository.findOne({ where: { email } });
     if (existingUser) {
       throw new Error("Ya existe un usuario con este email");
     }
 
-    // Crear nuevo usuario
     const newUser = this.userRepository.create({
       email,
-      password, // TODO: encriptar después
+      password,
       firstName,
       lastName
     });
@@ -46,7 +40,6 @@ export class UserService {
     return await this.userRepository.save(newUser);
   }
 
-  // Obtener usuario por ID
   static async getById(id: number): Promise<User> {
     const user = await this.userRepository.findOne({ where: { id } });
     if (!user) {
@@ -55,7 +48,6 @@ export class UserService {
     return user;
   }
 
-  // Buscar usuario por email
   static async getByEmail(email: string): Promise<User | null> {
     return await this.userRepository.findOne({ where: { email } });
   }

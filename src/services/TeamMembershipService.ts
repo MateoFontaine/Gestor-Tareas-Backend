@@ -8,7 +8,6 @@ export class TeamMembershipService {
   private static userRepository = AppDataSource.getRepository(User);
   private static teamRepository = AppDataSource.getRepository(Team);
 
-  // Agregar usuario a un equipo
   static async addMember(membershipData: {
     userId: number;
     teamId: number;
@@ -16,24 +15,20 @@ export class TeamMembershipService {
   }): Promise<TeamMembership> {
     const { userId, teamId, role = MemberRole.MEMBER } = membershipData;
 
-    // Validar campos obligatorios
     if (!userId || !teamId) {
       throw new Error("El usuario y equipo son obligatorios");
     }
 
-    // Verificar que el usuario existe
     const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user) {
       throw new Error("Usuario no encontrado");
     }
 
-    // Verificar que el equipo existe
     const team = await this.teamRepository.findOne({ where: { id: teamId } });
     if (!team) {
       throw new Error("Equipo no encontrado");
     }
 
-    // Verificar si ya es miembro
     const existingMembership = await this.membershipRepository.findOne({
       where: { userId, teamId }
     });
@@ -42,7 +37,6 @@ export class TeamMembershipService {
       throw new Error("El usuario ya es miembro de este equipo");
     }
 
-    // Crear nueva membresía
     const newMembership = this.membershipRepository.create({
       userId,
       teamId,
@@ -51,7 +45,6 @@ export class TeamMembershipService {
 
     const savedMembership = await this.membershipRepository.save(newMembership);
 
-    // Retornar con relaciones
     const membershipWithRelations = await this.membershipRepository.findOne({
       where: { id: savedMembership.id },
       relations: ["user", "team"]
@@ -64,9 +57,7 @@ export class TeamMembershipService {
     return membershipWithRelations;
   }
 
-  // Obtener miembros de un equipo
   static async getTeamMembers(teamId: number): Promise<TeamMembership[]> {
-    // Verificar que el equipo existe
     const team = await this.teamRepository.findOne({ where: { id: teamId } });
     if (!team) {
       throw new Error("Equipo no encontrado");
@@ -79,9 +70,7 @@ export class TeamMembershipService {
     });
   }
 
-  // Obtener equipos de un usuario
   static async getUserTeams(userId: number): Promise<TeamMembership[]> {
-    // Verificar que el usuario existe
     const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user) {
       throw new Error("Usuario no encontrado");
@@ -94,7 +83,6 @@ export class TeamMembershipService {
     });
   }
 
-  // Remover usuario de un equipo
   static async removeMember(userId: number, teamId: number): Promise<{ message: string }> {
     const membership = await this.membershipRepository.findOne({
       where: { userId, teamId },
@@ -108,7 +96,14 @@ export class TeamMembershipService {
     await this.membershipRepository.remove(membership);
 
     return { 
-      message: `Usuario ${membership.user.firstName} removido del equipo ${membership.team.name}` 
+      message: `Usuario removido del equipo correctamente` 
     };
+  }
+
+  static async getAll(): Promise<TeamMembership[]> {
+    return await this.membershipRepository.find({
+      relations: ["user", "team"],
+      order: { joinedAt: "DESC" }
+    });
   }
 }

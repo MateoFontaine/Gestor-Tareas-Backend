@@ -2,12 +2,15 @@ import "reflect-metadata";
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
+import * as dotenv from "dotenv";
 import { AppDataSource } from "./config/database";
 import userRoutes from "./routes/userRoutes";
 import teamRoutes from "./routes/teamRoutes";
 import taskRoutes from "./routes/taskRoutes";
 import commentRoutes from "./routes/commentRoutes";
 import membershipRoutes from "./routes/teamMembershipRoutes";
+
+dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -22,21 +25,11 @@ app.get("/", (req, res) => {
   res.json({ message: "¡Gestor de Tareas API funcionando!" });
 });
 
-
-
-// Rutas de usuarios
+// Rutas
 app.use("/users", userRoutes);
-
-// Rutas de equipos
 app.use("/teams", teamRoutes);
-
-// Rutas de tareas
 app.use("/tasks", taskRoutes);
-
-// Rutas de comentarios
 app.use("/comments", commentRoutes);
-
-// Rutas de membresías de equipo
 app.use("/memberships", membershipRoutes);
 
 // Nueva ruta para probar la conexión a la BD

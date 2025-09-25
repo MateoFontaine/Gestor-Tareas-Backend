@@ -10,7 +10,10 @@ export class TaskController {
         data: tasks
       });
     } catch (error) {
-      res.status(500).json({ message: "Error al obtener tareas" });
+      res.status(500).json({
+        message: "Error al obtener tareas",
+        error: error instanceof Error ? error.message : "Error desconocido"
+      });
     }
   }
 
@@ -44,6 +47,41 @@ export class TaskController {
         return res.status(400).json({ message: error.message });
       }
       res.status(500).json({ message: "Error interno" });
+    }
+  }
+
+  static async getById(req: Request, res: Response) {
+    try {
+      const id = parseInt(req.params.id);
+      const task = await TaskService.getById(id);
+      res.json({
+        message: "Tarea obtenida correctamente",
+        data: task
+      });
+    } catch (error) {
+      res.status(404).json({
+        message: error instanceof Error ? error.message : "Error desconocido"
+      });
+    }
+  }
+
+  static async delete(req: Request, res: Response) {
+    try {
+      const id = parseInt(req.params.id);
+      const result = await TaskService.delete(id);
+      res.json({
+        message: "Tarea eliminada correctamente",
+        data: result
+      });
+    } catch (error) {
+      if (error instanceof Error && error.message === "Tarea no encontrada") {
+        res.status(404).json({ message: error.message });
+      } else {
+        res.status(500).json({
+          message: "Error al eliminar tarea",
+          error: error instanceof Error ? error.message : "Error desconocido"
+        });
+      }
     }
   }
 }

@@ -3,13 +3,10 @@ import { TeamMembershipController } from "../controllers/TeamMembershipControlle
 
 const router = Router();
 
-// POST /memberships - Agregar usuario a equipo
+router.get("/", TeamMembershipController.getAll);
 router.post("/", TeamMembershipController.addMember);
-
-// GET /memberships/team/:teamId - Miembros de un equipo
 router.get("/team/:teamId", TeamMembershipController.getTeamMembers);
-
-// GET /memberships/user/:userId - Equipos de un usuario
 router.get("/user/:userId", TeamMembershipController.getUserTeams);
+router.delete("/", TeamMembershipController.removeMember);
 
 export default router;

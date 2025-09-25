@@ -2,7 +2,6 @@ import { Request, Response } from "express";
 import { TeamService } from "../services/TeamService";
 
 export class TeamController {
-  // Obtener todos los equipos
   static async getAll(req: Request, res: Response) {
     try {
       const teams = await TeamService.getAll();
@@ -18,7 +17,6 @@ export class TeamController {
     }
   }
 
-  // Crear un nuevo equipo
   static async create(req: Request, res: Response) {
     try {
       const team = await TeamService.create(req.body);
@@ -33,7 +31,6 @@ export class TeamController {
     }
   }
 
-  // Eliminar un equipo
   static async delete(req: Request, res: Response) {
     try {
       const { id } = req.params;

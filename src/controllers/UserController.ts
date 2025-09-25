@@ -2,7 +2,6 @@ import { Request, Response } from "express";
 import { UserService } from "../services/UserService";
 
 export class UserController {
-  // Obtener todos los usuarios
   static async getAll(req: Request, res: Response) {
     try {
       const users = await UserService.getAll();
@@ -18,7 +17,6 @@ export class UserController {
     }
   }
 
-  // Crear un nuevo usuario
   static async create(req: Request, res: Response) {
     try {
       const user = await UserService.create(req.body);
@@ -33,15 +31,18 @@ export class UserController {
     }
   }
 
-  // Obtener usuario por ID
-static async getById(req: Request, res: Response) {
-  console.log("=== getById fue llamado ===");
-  console.log("Parámetros recibidos:", req.params);
-  
-  res.json({
-    message: "Debug mode",
-    receivedId: req.params.id,
-    parsedId: parseInt(req.params.id)
-  });
+  static async getById(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const user = await UserService.getById(parseInt(id));
+      res.json({
+        message: "Usuario obtenido correctamente",
+        data: user
+      });
+    } catch (error) {
+      res.status(404).json({
+        message: error instanceof Error ? error.message : "Error desconocido"
+      });
+    }
+  }
 }
-}   

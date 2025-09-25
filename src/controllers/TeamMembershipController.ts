@@ -2,7 +2,6 @@ import { Request, Response } from "express";
 import { TeamMembershipService } from "../services/TeamMembershipService";
 
 export class TeamMembershipController {
-  // Agregar usuario a equipo
   static async addMember(req: Request, res: Response) {
     try {
       const membership = await TeamMembershipService.addMember(req.body);
@@ -17,7 +16,6 @@ export class TeamMembershipController {
     }
   }
 
-  // Obtener miembros de un equipo
   static async getTeamMembers(req: Request, res: Response) {
     try {
       const { teamId } = req.params;
@@ -40,7 +38,6 @@ export class TeamMembershipController {
     }
   }
 
-  // Obtener equipos de un usuario
   static async getUserTeams(req: Request, res: Response) {
     try {
       const { userId } = req.params;
@@ -60,6 +57,41 @@ export class TeamMembershipController {
           error: error instanceof Error ? error.message : "Error desconocido"
         });
       }
+    }
+  }
+
+  static async removeMember(req: Request, res: Response) {
+    try {
+      const { userId, teamId } = req.body;
+      const result = await TeamMembershipService.removeMember(userId, teamId);
+      res.json({
+        message: result.message,
+        data: { userId, teamId }
+      });
+    } catch (error) {
+      if (error instanceof Error && error.message === "La membresía no existe") {
+        res.status(404).json({ message: error.message });
+      } else {
+        res.status(500).json({
+          message: "Error al remover miembro",
+          error: error instanceof Error ? error.message : "Error desconocido"
+        });
+      }
+    }
+  }
+
+  static async getAll(req: Request, res: Response) {
+    try {
+      const memberships = await TeamMembershipService.getAll();
+      res.json({
+        message: "Membresías obtenidas correctamente",
+        data: memberships
+      });
+    } catch (error) {
+      res.status(500).json({
+        message: "Error al obtener membresías",
+        error: error instanceof Error ? error.message : "Error desconocido"
+      });
     }
   }
 }

@@ -3,6 +3,13 @@ import { Task, TaskStatus, TaskPriority } from "../entities/Task";
 import { User } from "../entities/User";
 import { Team } from "../entities/Team";
 
+const allowedTransitions = {
+  [TaskStatus.PENDING]: [TaskStatus.IN_PROGRESS, TaskStatus.CANCELLED],
+  [TaskStatus.IN_PROGRESS]: [TaskStatus.COMPLETED, TaskStatus.CANCELLED],
+  [TaskStatus.COMPLETED]: [],
+  [TaskStatus.CANCELLED]: []
+};
+
 export class TaskService {
   private static taskRepository = AppDataSource.getRepository(Task);
   private static userRepository = AppDataSource.getRepository(User);
@@ -14,15 +21,7 @@ export class TaskService {
     });
   }
 
-  static async create(taskData: {
-    title: string;
-    description?: string;
-    teamId: number;
-    createdById: number;
-    assignedToId?: number;
-    priority?: TaskPriority;
-    dueDate?: string;
-  }): Promise<Task> {
+  static async create(taskData: any): Promise<Task> {
     const { title, description, teamId, createdById, assignedToId, priority, dueDate } = taskData;
 
     if (!title || !teamId || !createdById) {
@@ -65,40 +64,28 @@ export class TaskService {
       priority: priority || TaskPriority.MEDIUM,
       dueDate: dueDate ? new Date(dueDate) : undefined
     });
-
+    
     return await this.taskRepository.save(newTask);
   }
 
   static async update(id: number, updates: any): Promise<Task> {
-    const task = await this.taskRepository.findOne({
+    const task = await this.taskRepository.findOne({ 
       where: { id },
       relations: ["team", "createdBy", "assignedTo"]
     });
-
+    
     if (!task) {
       throw new Error("Tarea no encontrada");
     }
 
-    // REGLA: Las tareas finalizadas o canceladas NO pueden cambiar de estado
-    if ((task.status === "finalizada" || task.status === "cancelada") && updates.status) {
-      throw new Error("Las tareas finalizadas o canceladas no pueden cambiar de estado");
+    if (task.status === TaskStatus.COMPLETED || task.status === TaskStatus.CANCELLED) {
+      throw new Error("No se puede editar una tarea que está finalizada o cancelada");
     }
 
-    // REGLA: No editar tareas finalizadas o canceladas
-    if (task.status === "finalizada" || task.status === "cancelada") {
-      throw new Error("No se pueden editar tareas finalizadas o canceladas");
-    }
-
-    // REGLA: Transiciones válidas simples
     if (updates.status && updates.status !== task.status) {
-      if (task.status === "pendiente") {
-        if (updates.status !== "en_curso" && updates.status !== "cancelada") {
-          throw new Error("Desde pendiente solo se puede ir a en_curso o cancelada");
-        }
-      } else if (task.status === "en_curso") {
-        if (updates.status !== "finalizada" && updates.status !== "cancelada") {
-          throw new Error("Desde en_curso solo se puede ir a finalizada o cancelada");
-        }
+      const transitions = allowedTransitions[task.status];
+      if (!transitions || !transitions.includes(updates.status)) {
+        throw new Error(`No se puede cambiar de ${task.status} a ${updates.status}`);
       }
     }
 
@@ -112,13 +99,34 @@ export class TaskService {
       }
     }
 
-    if (updates.title !== undefined) task.title = updates.title;
-    if (updates.description !== undefined) task.description = updates.description;
-    if (updates.priority !== undefined) task.priority = updates.priority;
-    if (updates.assignedToId !== undefined) task.assignedToId = updates.assignedToId;
-    if (updates.status !== undefined) task.status = updates.status;
-    if (updates.dueDate !== undefined) task.dueDate = new Date(updates.dueDate);
+    Object.assign(task, updates);
+    if (updates.dueDate) {
+      task.dueDate = new Date(updates.dueDate);
+    }
 
     return await this.taskRepository.save(task);
+  }
+
+  static async getById(id: number): Promise<Task> {
+    const task = await this.taskRepository.findOne({
+      where: { id },
+      relations: ["team", "createdBy", "assignedTo", "comments", "comments.author"]
+    });
+    
+    if (!task) {
+      throw new Error("Tarea no encontrada");
+    }
+    
+    return task;
+  }
+
+  static async delete(id: number): Promise<{ id: number; title: string }> {
+    const task = await this.taskRepository.findOne({ where: { id } });
+    if (!task) {
+      throw new Error("Tarea no encontrada");
+    }
+
+    await this.taskRepository.remove(task);
+    return { id, title: task.title };
   }
 }
