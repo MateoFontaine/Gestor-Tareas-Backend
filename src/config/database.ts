@@ -4,6 +4,7 @@ import { Team } from "../entities/Team";
 import { Task } from "../entities/Task";
 import { Comment } from "../entities/Comment";
 import { TeamMembership } from "../entities/TeamMembership";
+import { Tag } from "../entities/Tag"; // ← AÑADIR ESTA LÍNEA
 import * as dotenv from "dotenv";
 
 dotenv.config();
@@ -23,6 +24,7 @@ export const AppDataSource = new DataSource({
     Task,
     Comment,
     TeamMembership,
+    Tag, // ← AÑADIR ESTA LÍNEA
   ],
   migrations: ["src/migrations/*.ts"],
   migrationsRun: process.env.DB_MIGRATIONS_RUN === "true",

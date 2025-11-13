@@ -1,6 +1,9 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn, OneToMany } from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn, OneToMany, ManyToMany, JoinTable } from "typeorm";
 import { User } from "./User";
 import { Team } from "./Team";
+import { Tag } from "./Tag";
+
+
 
 // Enums para los estados y prioridades
 export enum TaskStatus {
@@ -71,6 +74,16 @@ export class Task {
   // Relación: Una tarea puede tener MUCHOS comentarios
   @OneToMany("Comment", "task")
   comments!: Comment[];
+
+  // Relación: Una tarea puede tener MUCHAS etiquetas
+  @ManyToMany(() => Tag, (tag) => tag.tasks)
+  @JoinTable({
+    name: "task_tags", // Nombre de la tabla intermedia
+    joinColumn: { name: "task_id", referencedColumnName: "id" },
+    inverseJoinColumn: { name: "tag_id", referencedColumnName: "id" },
+  })
+  tags!: Tag[];
+
 
   @CreateDateColumn()
   createdAt!: Date;

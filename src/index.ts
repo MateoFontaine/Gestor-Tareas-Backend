@@ -4,11 +4,14 @@ import cors from "cors";
 import helmet from "helmet";
 import * as dotenv from "dotenv";
 import { AppDataSource } from "./config/database";
+
+// Importaciones de rutas
 import userRoutes from "./routes/userRoutes";
 import teamRoutes from "./routes/teamRoutes";
 import taskRoutes from "./routes/taskRoutes";
 import commentRoutes from "./routes/commentRoutes";
 import membershipRoutes from "./routes/teamMembershipRoutes";
+import tagRoutes from "./routes/tagRoutes";
 
 dotenv.config();
 
@@ -31,6 +34,7 @@ app.use("/teams", teamRoutes);
 app.use("/tasks", taskRoutes);
 app.use("/comments", commentRoutes);
 app.use("/memberships", membershipRoutes);
+app.use("/tags", tagRoutes);
 
 // Nueva ruta para probar la conexión a la BD
 app.get("/test-db", async (req, res) => {
@@ -49,9 +53,8 @@ app.get("/test-db", async (req, res) => {
 AppDataSource.initialize()
   .then(() => {
     console.log("✅ Base de datos conectada");
-    
     app.listen(PORT, () => {
-      console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
+      console.log(`🚀 Servidor corriendo en puerto ${PORT}`);  // ← CORREGIDO AQUÍ
     });
   })
   .catch((error) => {

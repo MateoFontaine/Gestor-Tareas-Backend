@@ -84,4 +84,49 @@ export class TaskController {
       }
     }
   }
+
+  static async addTag(req: Request, res: Response) {
+    try {
+      const { taskId, tagId } = req.params;
+
+      const updatedTask = await TaskService.addTagToTask(parseInt(taskId), parseInt(tagId));
+      res.json({
+        message: "Etiqueta añadida correctamente",
+        data: updatedTask
+      });
+
+    } catch (error) {
+      if (error instanceof Error) {
+        if (error.message.includes("no encontrada")) {
+          return res.status(404).json({ message: error.message });
+        }
+        if (error.message.includes("ya está asignada")) {
+          return res.status(409).json({ message: error.message });
+        }
+        return res.status(400).json({ message: error.message });
+      }
+      res.status(500).json({ message: "Error interno" });
+    }
+  }
+
+  static async removeTag(req: Request, res: Response) {
+    try {
+      const { taskId, tagId } = req.params;
+
+      const updatedTask = await TaskService.removeTagFromTask(parseInt(taskId), parseInt(tagId));
+      res.json({
+        message: "Etiqueta quitada correctamente",
+        data: updatedTask
+      });
+
+    } catch (error) {
+      if (error instanceof Error) {
+        if (error.message.includes("no encontrada") || error.message.includes("no está asignada")) {
+          return res.status(404).json({ message: error.message });
+        }
+        return res.status(400).json({ message: error.message });
+      }
+      res.status(500).json({ message: "Error interno" });
+    }
+  }
 }
