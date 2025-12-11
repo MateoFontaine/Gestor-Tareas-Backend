@@ -1,0 +1,187 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Gestor de Tareas API",
+    "version": "1.0.0",
+    "description": "API completa para la gestión de proyectos, equipos y usuarios."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "Servidor Local"
+    }
+  ],
+  "components": {
+    "schemas": {
+      "Task": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "title": { "type": "string" },
+          "description": { "type": "string" },
+          "status": { "type": "string", "enum": ["pendiente", "en_curso", "finalizada", "cancelada"] },
+          "priority": { "type": "string", "enum": ["baja", "media", "alta"] },
+          "teamId": { "type": "integer" },
+          "dueDate": { "type": "string", "format": "date" }
+        }
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "firstName": { "type": "string" },
+          "lastName": { "type": "string" },
+          "email": { "type": "string", "format": "email" }
+        }
+      },
+      "Team": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "name": { "type": "string" },
+          "description": { "type": "string" }
+        }
+      },
+      "Comment": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "content": { "type": "string" },
+          "taskId": { "type": "integer" },
+          "createdById": { "type": "integer" }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/tasks": {
+      "get": {
+        "summary": "Obtener todas las tareas (con filtros)",
+        "tags": ["Tasks"],
+        "parameters": [
+          { "name": "page", "in": "query", "schema": { "type": "integer" } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer" } },
+          { "name": "teamId", "in": "query", "schema": { "type": "integer" } },
+          { "name": "status", "in": "query", "schema": { "type": "string" } },
+          { "name": "tagId", "in": "query", "schema": { "type": "integer" } }
+        ],
+        "responses": { "200": { "description": "Lista de tareas" } }
+      },
+      "post": {
+        "summary": "Crear tarea",
+        "tags": ["Tasks"],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Task" } } }
+        },
+        "responses": { "201": { "description": "Creado" } }
+      }
+    },
+    "/tasks/{id}": {
+      "get": {
+        "summary": "Obtener tarea por ID",
+        "tags": ["Tasks"],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": { "200": { "description": "OK" } }
+      },
+      "put": {
+        "summary": "Actualizar tarea",
+        "tags": ["Tasks"],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "requestBody": {
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Task" } } }
+        },
+        "responses": { 
+            "200": { "description": "Actualizado" },
+            "409": { "description": "Conflicto por dependencias" }
+        }
+      },
+      "delete": {
+        "summary": "Eliminar tarea",
+        "tags": ["Tasks"],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": { "200": { "description": "Eliminado" } }
+      }
+    },
+    "/tasks/{taskId}/dependencies": {
+      "get": {
+        "summary": "Ver dependencias",
+        "tags": ["Tasks"],
+        "parameters": [{ "name": "taskId", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": { "200": { "description": "Lista" } }
+      },
+      "post": {
+        "summary": "Agregar bloqueo",
+        "tags": ["Tasks"],
+        "parameters": [{ "name": "taskId", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": { "targetTaskId": { "type": "integer" }, "note": { "type": "string" } }
+              }
+            }
+          }
+        },
+        "responses": { "201": { "description": "Creado" } }
+      }
+    },
+    "/tasks/{taskId}/history": {
+      "get": {
+        "summary": "Ver historial (Auditoría)",
+        "tags": ["Tasks"],
+        "parameters": [{ "name": "taskId", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": { "200": { "description": "Historial" } }
+      }
+    },
+    "/users": {
+      "get": {
+        "summary": "Listar usuarios",
+        "tags": ["Users"],
+        "responses": { "200": { "description": "Lista de usuarios" } }
+      },
+      "post": {
+        "summary": "Crear usuario",
+        "tags": ["Users"],
+        "requestBody": {
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/User" } } }
+        },
+        "responses": { "201": { "description": "Usuario creado" } }
+      }
+    },
+    "/teams": {
+      "get": {
+        "summary": "Listar equipos",
+        "tags": ["Teams"],
+        "responses": { "200": { "description": "Lista de equipos" } }
+      },
+      "post": {
+        "summary": "Crear equipo",
+        "tags": ["Teams"],
+        "requestBody": {
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Team" } } }
+        },
+        "responses": { "201": { "description": "Equipo creado" } }
+      }
+    },
+    "/comments": {
+      "post": {
+        "summary": "Agregar comentario",
+        "tags": ["Comments"],
+        "requestBody": {
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Comment" } } }
+        },
+        "responses": { "201": { "description": "Comentario creado" } }
+      }
+    },
+    "/comments/{id}": {
+        "delete": {
+            "summary": "Eliminar comentario",
+            "tags": ["Comments"],
+            "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+            "responses": { "200": { "description": "Eliminado" } }
+        }
+    }
+  }
+}

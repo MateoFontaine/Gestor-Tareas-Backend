@@ -13,10 +13,14 @@ import commentRoutes from "./routes/commentRoutes";
 import membershipRoutes from "./routes/teamMembershipRoutes";
 import tagRoutes from "./routes/tagRoutes";
 
+// Importar Swagger (NUEVO)
+import { swaggerDocs } from "./config/swagger"; 
+
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+// Nos aseguramos que sea un número para pasarlo a la función de Swagger
+const PORT = parseInt(process.env.PORT || "3000"); 
 
 // Middlewares
 app.use(cors());
@@ -53,8 +57,12 @@ app.get("/test-db", async (req, res) => {
 AppDataSource.initialize()
   .then(() => {
     console.log("✅ Base de datos conectada");
+    
     app.listen(PORT, () => {
-      console.log(`🚀 Servidor corriendo en puerto ${PORT}`);  // ← CORREGIDO AQUÍ
+      console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
+      
+      // ACTIVAMOS LA DOCUMENTACIÓN AQUÍ
+      swaggerDocs(app, PORT); 
     });
   })
   .catch((error) => {

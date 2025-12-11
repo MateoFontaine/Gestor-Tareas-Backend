@@ -2,10 +2,9 @@ import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateCol
 import { User } from "./User";
 import { Team } from "./Team";
 import { Tag } from "./Tag";
+import { Comment } from "./Comment";
+import { TaskDependency } from "./TaskDependency"; 
 
-
-
-// Enums para los estados y prioridades
 export enum TaskStatus {
   PENDING = "pendiente",
   IN_PROGRESS = "en_curso", 
@@ -47,7 +46,6 @@ export class Task {
   @Column({ nullable: true })
   dueDate?: Date;
 
-  // Relación con el equipo al que pertenece
   @ManyToOne(() => Team)
   @JoinColumn({ name: "team_id" })
   team!: Team;
@@ -55,7 +53,6 @@ export class Task {
   @Column({ name: "team_id" })
   teamId!: number;
 
-  // Usuario que creó la tarea
   @ManyToOne(() => User)
   @JoinColumn({ name: "created_by" })
   createdBy!: User;
@@ -63,7 +60,6 @@ export class Task {
   @Column({ name: "created_by" })
   createdById!: number;
 
-  // Usuario asignado (opcional)
   @ManyToOne(() => User, { nullable: true })
   @JoinColumn({ name: "assigned_to" })
   assignedTo?: User;
@@ -71,19 +67,26 @@ export class Task {
   @Column({ name: "assigned_to", nullable: true })
   assignedToId?: number;
 
-  // Relación: Una tarea puede tener MUCHOS comentarios
-  @OneToMany("Comment", "task")
+  @OneToMany(() => Comment, (comment) => comment.task)
   comments!: Comment[];
 
-  // Relación: Una tarea puede tener MUCHAS etiquetas
   @ManyToMany(() => Tag, (tag) => tag.tasks)
   @JoinTable({
-    name: "task_tags", // Nombre de la tabla intermedia
+    name: "task_tags",
     joinColumn: { name: "task_id", referencedColumnName: "id" },
     inverseJoinColumn: { name: "tag_id", referencedColumnName: "id" },
   })
   tags!: Tag[];
 
+  // --- NUEVAS RELACIONES DE DEPENDENCIAS ---
+  
+  // Dependencias que SALEN (Yo dependo de...)
+  @OneToMany(() => TaskDependency, (dep) => dep.sourceTask)
+  outgoingDependencies!: TaskDependency[];
+
+  // Dependencias que ENTRAN (Alguien depende de mi...)
+  @OneToMany(() => TaskDependency, (dep) => dep.targetTask)
+  incomingDependencies!: TaskDependency[];
 
   @CreateDateColumn()
   createdAt!: Date;
@@ -91,6 +94,3 @@ export class Task {
   @UpdateDateColumn()
   updatedAt!: Date;
 }
-
-// Import después para evitar circular dependency
-import type { Comment } from "./Comment";

@@ -1,70 +1,22 @@
 import { AppDataSource } from "../config/database";
 import { Comment } from "../entities/Comment";
-import { User } from "../entities/User";
 import { Task } from "../entities/Task";
 
 export class CommentService {
   private static commentRepository = AppDataSource.getRepository(Comment);
-  private static userRepository = AppDataSource.getRepository(User);
   private static taskRepository = AppDataSource.getRepository(Task);
 
   static async getAll(): Promise<Comment[]> {
     return await this.commentRepository.find({
-      relations: ["task", "author"],
+      relations: ["task", "createdBy"], 
       order: { createdAt: "DESC" }
     });
   }
 
-  static async create(commentData: {
-    content: string;
-    taskId: number;
-    authorId: number;
-  }): Promise<Comment> {
-    const { content, taskId, authorId } = commentData;
-
-    if (!content || !taskId || !authorId) {
-      throw new Error("El contenido, tarea y autor son obligatorios");
-    }
-
-    const task = await this.taskRepository.findOne({ where: { id: taskId } });
-    if (!task) {
-      throw new Error("Tarea no encontrada");
-    }
-
-    const author = await this.userRepository.findOne({ where: { id: authorId } });
-    if (!author) {
-      throw new Error("Usuario autor no encontrado");
-    }
-
-    const newComment = this.commentRepository.create({
-      content,
-      taskId,
-      authorId
-    });
-
-    const savedComment = await this.commentRepository.save(newComment);
-
-    const commentWithRelations = await this.commentRepository.findOne({
-      where: { id: savedComment.id },
-      relations: ["task", "author"]
-    });
-
-    if (!commentWithRelations) {
-      throw new Error("Error al obtener el comentario creado");
-    }
-
-    return commentWithRelations;
-  }
-
   static async getByTask(taskId: number): Promise<Comment[]> {
-    const task = await this.taskRepository.findOne({ where: { id: taskId } });
-    if (!task) {
-      throw new Error("Tarea no encontrada");
-    }
-
     return await this.commentRepository.find({
       where: { taskId },
-      relations: ["author", "task"],
+      relations: ["createdBy"],
       order: { createdAt: "ASC" }
     });
   }
@@ -72,23 +24,37 @@ export class CommentService {
   static async getById(id: number): Promise<Comment> {
     const comment = await this.commentRepository.findOne({
       where: { id },
-      relations: ["task", "author"]
+      relations: ["task", "createdBy"]
     });
-
-    if (!comment) {
-      throw new Error("Comentario no encontrado");
-    }
-
+    if (!comment) throw new Error("Comentario no encontrado");
     return comment;
   }
 
-  static async delete(id: number): Promise<{ id: number; content: string }> {
-    const comment = await this.commentRepository.findOne({ where: { id } });
-    if (!comment) {
-      throw new Error("Comentario no encontrado");
-    }
+  // AQUÍ ESTABAN LOS ERRORES, YA CORREGIDOS:
+  static async create(data: { content: string; taskId: number; createdById: number }) {
+    // 1. Verificamos la tarea
+    const task = await this.taskRepository.findOneBy({ id: data.taskId });
+    if (!task) throw new Error("Tarea no encontrada");
 
-    await this.commentRepository.remove(comment);
-    return { id, content: comment.content };
+    // 2. Creamos el objeto (Usando createdById, NO authorId)
+    const comment = this.commentRepository.create({
+      content: data.content,
+      taskId: data.taskId,
+      createdById: data.createdById // <--- CORRECCIÓN 1: El nombre exacto de la entidad
+    });
+
+    const savedComment = await this.commentRepository.save(comment);
+    
+    // 3. Solucionamos el error de TypeScript sobre el ID
+    const result: any = savedComment; 
+    const finalId = Array.isArray(result) ? result[0].id : result.id; // <--- CORRECCIÓN 2: Truco para obtener el ID
+
+    return this.getById(finalId);
+  }
+
+  static async delete(id: number) {
+    const result = await this.commentRepository.delete(id);
+    if (result.affected === 0) throw new Error("Comentario no encontrado");
+    return { message: "Comentario eliminado" };
   }
 }

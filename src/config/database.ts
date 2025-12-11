@@ -1,31 +1,31 @@
 import { DataSource } from "typeorm";
+import * as dotenv from "dotenv";
+import { Task } from "../entities/Task";
 import { User } from "../entities/User";
 import { Team } from "../entities/Team";
-import { Task } from "../entities/Task";
+import { Tag } from "../entities/Tag";
+import { TaskDependency } from "../entities/TaskDependency";
+import { TaskHistory } from "../entities/TaskHistory";
 import { Comment } from "../entities/Comment";
 import { TeamMembership } from "../entities/TeamMembership";
-import { Tag } from "../entities/Tag"; // ← AÑADIR ESTA LÍNEA
-import * as dotenv from "dotenv";
 
 dotenv.config();
 
 export const AppDataSource = new DataSource({
-  type: process.env.DB_TYPE as "postgres",
+  type: "postgres",
   host: process.env.DB_HOST || "localhost",
   port: parseInt(process.env.DB_PORT || "5432"),
-  username: process.env.DB_USERNAME || "postgres",
-  password: process.env.DB_PASSWORD,
+  username: process.env.DB_USER || "postgres", // Revisa si tu usuario es 'postgres' o tu nombre
+  password: process.env.DB_PASSWORD || "admin", // Revisa tu contraseña
   database: process.env.DB_NAME || "gestor_tareas",
-  synchronize: process.env.DB_SYNCHRONIZE === "true",
-  logging: process.env.DB_LOGGING === "true",
+  
+  // ¡ESTO ES LO QUE TE VA A SALVAR!
+  synchronize: false, 
+  
+  logging: false, // Lo pongo en false para que no te llene la consola de letras
   entities: [
-    User,
-    Team,
-    Task,
-    Comment,
-    TeamMembership,
-    Tag, // ← AÑADIR ESTA LÍNEA
+    User, Team, Task, Tag, TaskDependency, TaskHistory, Comment, TeamMembership
   ],
-  migrations: ["src/migrations/*.ts"],
-  migrationsRun: process.env.DB_MIGRATIONS_RUN === "true",
+  subscribers: [],
+  migrations: [],
 });

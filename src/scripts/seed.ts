@@ -5,6 +5,8 @@ import { Team } from "../entities/Team";
 import { Task, TaskStatus, TaskPriority } from "../entities/Task";
 import { Comment } from "../entities/Comment";
 import { TeamMembership, MemberRole } from "../entities/TeamMembership";
+import { TaskDependency, DependencyType } from "../entities/TaskDependency";
+import { Tag } from "../entities/Tag";
 
 async function seedDatabase() {
   try {
@@ -14,14 +16,16 @@ async function seedDatabase() {
     // Verificar si ya hay datos
     const userCount = await AppDataSource.getRepository(User).count();
     if (userCount > 0) {
-      console.log("La base de datos ya contiene usuarios. El seed ya fue ejecutado.");
-      console.log("Si deseas volver a ejecutar el seed, limpia la base de datos primero.");
-      return;
+      console.log("⚠️ Base de datos con datos previos. BORRANDO TODO PARA EMPEZAR DE CERO...");
+      
+      // Limpieza radical para que no haya conflictos de IDs
+      await AppDataSource.query(`TRUNCATE TABLE "comments", "task_tags", "tags", "task_dependencies", "tasks", "team_memberships", "teams", "users" RESTART IDENTITY CASCADE;`);
+      console.log("🧹 Base de datos limpia.");
     }
 
-    console.log("Creando datos de prueba...");
+    console.log("Creando datos masivos...");
 
-    // Crear usuarios
+    // 1. Usuarios
     const userRepo = AppDataSource.getRepository(User);
     const users = await userRepo.save([
       { email: "admin@gestor.com", password: "admin123", firstName: "Admin", lastName: "Sistema" },
@@ -29,118 +33,110 @@ async function seedDatabase() {
       { email: "maria.garcia@dev.com", password: "dev123", firstName: "María", lastName: "García" },
       { email: "carlos.lopez@dev.com", password: "dev123", firstName: "Carlos", lastName: "López" }
     ]);
-    console.log(`✓ Creados ${users.length} usuarios`);
 
-    // Crear equipos
+    // 2. Equipos
     const teamRepo = AppDataSource.getRepository(Team);
     const teams = await teamRepo.save([
-      { name: "Frontend Team", description: "Desarrollo de interfaces de usuario", ownerId: users[0].id },
-      { name: "Backend Team", description: "Desarrollo de APIs y servicios", ownerId: users[0].id },
-      { name: "QA Team", description: "Control de calidad y testing", ownerId: users[1].id }
+      { name: "Frontend Team", description: "UI/UX y React", ownerId: users[0].id },
+      { name: "Backend Team", description: "API, Node y Base de Datos", ownerId: users[0].id },
+      { name: "QA & Testing", description: "Control de Calidad", ownerId: users[1].id },
+      { name: "DevOps", description: "Infraestructura y Cloud", ownerId: users[1].id }
     ]);
-    console.log(`✓ Creados ${teams.length} equipos`);
 
-    // Crear membresías
-    const membershipRepo = AppDataSource.getRepository(TeamMembership);
-    await membershipRepo.save([
-      { userId: users[1].id, teamId: teams[0].id, role: MemberRole.MEMBER },
-      { userId: users[2].id, teamId: teams[0].id, role: MemberRole.MEMBER },
-      { userId: users[2].id, teamId: teams[1].id, role: MemberRole.MEMBER },
-      { userId: users[3].id, teamId: teams[1].id, role: MemberRole.MEMBER },
-      { userId: users[3].id, teamId: teams[2].id, role: MemberRole.MEMBER }
+    // 3. Tags
+    const tagRepo = AppDataSource.getRepository(Tag);
+    const tags = await tagRepo.save([
+      { name: "Urgente", color: "#ef4444" },
+      { name: "Bug", color: "#f97316" },
+      { name: "Feature", color: "#3b82f6" },
+      { name: "Mejora", color: "#10b981" },
+      { name: "Documentación", color: "#8b5cf6" }
     ]);
-    console.log("✓ Membresías creadas");
 
-    // Crear tareas
+    // 4. Generación de 60 Tareas
     const taskRepo = AppDataSource.getRepository(Task);
-    const tasks = await taskRepo.save([
-      {
-        title: "Implementar autenticación",
-        description: "Desarrollar sistema de login con JWT",
-        teamId: teams[1].id,
-        createdById: users[0].id,
-        assignedToId: users[2].id,
-        priority: TaskPriority.HIGH,
-        status: TaskStatus.IN_PROGRESS,
-        dueDate: new Date('2025-12-31')
-      },
-      {
-        title: "Diseñar homepage",
-        description: "Crear diseño responsive de la página principal",
-        teamId: teams[0].id,
-        createdById: users[0].id,
-        assignedToId: users[1].id,
-        priority: TaskPriority.MEDIUM,
-        status: TaskStatus.PENDING,
-        dueDate: new Date('2025-11-30')
-      },
-      {
-        title: "Testing de endpoints",
-        description: "Pruebas unitarias para todos los endpoints de la API",
-        teamId: teams[2].id,
-        createdById: users[1].id,
-        assignedToId: users[3].id,
-        priority: TaskPriority.LOW,
-        status: TaskStatus.COMPLETED
-      },
-      {
-        title: "Documentar API",
-        description: "Crear documentación completa con Swagger",
-        teamId: teams[1].id,
-        createdById: users[0].id,
-        priority: TaskPriority.MEDIUM,
-        status: TaskStatus.PENDING
-      }
-    ]);
-    console.log(`✓ Creadas ${tasks.length} tareas`);
+    const createdTasks: Task[] = [];
+    
+    const taskTitles = [
+      "Implementar Login", "Diseñar Home", "Corregir Bug #102", "Optimizar DB", 
+      "Configurar Docker", "Crear Tests Unitarios", "Revisar PRs", "Actualizar Node",
+      "Cambiar colores CSS", "Reunión con Cliente", "Hacer Deploy", "Configurar CI/CD",
+      "Documentar Endpoints", "Refactorizar Auth", "Crear Seed", "Arreglar Navbar",
+      "Optimizar Imágenes", "Configurar Nginx", "Migrar a TypeScript", "Backup Semanal"
+    ];
 
-    // Crear comentarios
+    console.log("Generando 60 tareas...");
+    for (let i = 0; i < 60; i++) {
+        const randomTitle = taskTitles[Math.floor(Math.random() * taskTitles.length)];
+        const randomTeam = teams[Math.floor(Math.random() * teams.length)];
+        const randomUser = users[Math.floor(Math.random() * users.length)];
+        const randomStatus = Object.values(TaskStatus)[Math.floor(Math.random() * 4)];
+        const randomPriority = Object.values(TaskPriority)[Math.floor(Math.random() * 3)];
+
+        const task = await taskRepo.save({
+            title: `${randomTitle} (Iteración ${i+1})`,
+            description: `Descripción detallada para la tarea ${i+1}. Esto es un texto de relleno para que se vea bien en el modal.`,
+            teamId: randomTeam.id,
+            createdById: users[0].id,
+            assignedToId: randomUser.id,
+            status: randomStatus,
+            priority: randomPriority,
+            dueDate: new Date(new Date().setDate(new Date().getDate() + Math.floor(Math.random() * 30))) // Fecha futura random
+        });
+        
+        // Asignar tags random
+        if (Math.random() > 0.5) {
+            const randomTag = tags[Math.floor(Math.random() * tags.length)];
+            await AppDataSource.createQueryBuilder().relation(Task, "tags").of(task).add(randomTag);
+        }
+
+        createdTasks.push(task);
+    }
+
+    // 5. Dependencias (Bloqueos)
+    console.log("Generando bloqueos aleatorios...");
+    const depRepo = AppDataSource.getRepository(TaskDependency);
+    
+    // Creamos 15 dependencias al azar
+    for (let i = 0; i < 15; i++) {
+        const source = createdTasks[Math.floor(Math.random() * createdTasks.length)];
+        const target = createdTasks[Math.floor(Math.random() * createdTasks.length)];
+
+        if (source.id !== target.id) {
+            // Evitamos duplicados con un try/catch simple
+            try {
+                await depRepo.save({
+                    sourceTaskId: source.id,
+                    targetTaskId: target.id,
+                    type: DependencyType.DEPENDS_ON,
+                    note: "Dependencia generada automáticamente",
+                });
+            } catch (e) {} // Ignoramos si ya existe o hay ciclo
+        }
+    }
+
+    // 6. Comentarios
     const commentRepo = AppDataSource.getRepository(Comment);
-    await commentRepo.save([
-      {
-        content: "Iniciando implementación del sistema de autenticación",
-        taskId: tasks[0].id,
-        authorId: users[2].id
-      },
-      {
-        content: "JWT configurado correctamente, falta middleware de validación",
-        taskId: tasks[0].id,
-        authorId: users[2].id
-      },
-      {
-        content: "Mockups aprobados por el cliente, comenzando desarrollo",
-        taskId: tasks[1].id,
-        authorId: users[1].id
-      },
-      {
-        content: "Testing completado - 95% de cobertura alcanzado",
-        taskId: tasks[2].id,
-        authorId: users[3].id
-      },
-      {
-        content: "Todas las pruebas pasan correctamente",
-        taskId: tasks[2].id,
-        authorId: users[1].id
-      }
-    ]);
-    console.log("✓ Comentarios creados");
+    for (const task of createdTasks) {
+        if (Math.random() > 0.7) { // 30% de las tareas tienen comentario
+             await commentRepo.save({
+                content: "Este es un comentario de prueba generado automáticamente.",
+                taskId: task.id,
+                createdById: users[Math.floor(Math.random() * users.length)].id
+             });
+        }
+    }
 
-    console.log("\n🎉 ¡Seed completado exitosamente!");
-    console.log("\n📊 Datos de prueba disponibles:");
-    console.log("👥 4 usuarios:");
-    console.log("   - admin@gestor.com / admin123");
-    console.log("   - juan.perez@dev.com / dev123");
-    console.log("   - maria.garcia@dev.com / dev123");
-    console.log("   - carlos.lopez@dev.com / dev123");
-    console.log("🏢 3 equipos (Frontend, Backend, QA)");
-    console.log("📋 4 tareas con diferentes estados");
-    console.log("💬 5 comentarios en las tareas");
-    console.log("👨‍👩‍👧‍👦 Membresías de usuarios en equipos");
-    console.log("\n🚀 ¡Ya puedes probar la API con los datos cargados!");
+    console.log("\n🎉 ¡Seed Masivo completado!");
+    console.log(`📊 Se crearon:`);
+    console.log(`   - 60 Tareas`);
+    console.log(`   - 15 Dependencias`);
+    console.log(`   - 4 Equipos`);
+    console.log(`   - 5 Tags`);
+    console.log("\n🚀 Ahora puedes probar la paginación real en el Frontend.");
 
   } catch (error) {
     console.error("❌ Error en el seed:", error);
-    process.exit(1);
   } finally {
     await AppDataSource.destroy();
   }

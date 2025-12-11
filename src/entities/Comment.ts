@@ -1,6 +1,6 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from "typeorm";
-import { User } from "./User";
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, CreateDateColumn } from "typeorm";
 import { Task } from "./Task";
+import { User } from "./User";
 
 @Entity("comments")
 export class Comment {
@@ -10,25 +10,22 @@ export class Comment {
   @Column("text")
   content!: string;
 
-  // Relación: Un comentario pertenece a UNA tarea
-  @ManyToOne(() => Task)
-  @JoinColumn({ name: "task_id" })
-  task!: Task;
-
-  @Column({ name: "task_id" })
-  taskId!: number;
-
-  // Relación: Un comentario tiene UN autor (usuario)
-  @ManyToOne(() => User)
-  @JoinColumn({ name: "author_id" })
-  author!: User;
-
-  @Column({ name: "author_id" })
-  authorId!: number;
-
   @CreateDateColumn()
   createdAt!: Date;
 
-  @UpdateDateColumn()
-  updatedAt!: Date;
+  // Relación con Tarea
+  @Column({ name: 'task_id' })
+  taskId!: number;
+
+  @ManyToOne(() => Task, (task) => task.comments, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'task_id' })
+  task!: Task;
+
+  // Relación con Usuario (Creador)
+  @Column({ name: 'user_id', nullable: true }) // 'nullable: true' evita errores si hay datos viejos
+  createdById!: number;
+
+  @ManyToOne(() => User)
+  @JoinColumn({ name: 'user_id' })
+  createdBy!: User; 
 }

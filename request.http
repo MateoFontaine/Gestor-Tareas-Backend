@@ -1,406 +1,100 @@
-### ============= RUTAS BÁSICAS =============
+### ==========================================
+### GUION DE DEFENSA: DEPENDENCIAS Y BLOQUEOS
+### ==========================================
+### IMPORTANTE: Ejecutar estos pasos EN ORDEN (1, 2, 3...)
+### Asegúrate de que tu servidor esté corriendo (npm run dev)
+### ==========================================
 
-### Verificar que el servidor funciona
-GET http://localhost:3000/
-
-### Verificar conexión a BD
-GET http://localhost:3000/test-db
-
-### ============= USUARIOS (CRUD) =============
-
-### Obtener todos los usuarios
-GET http://localhost:3000/users
-
-### Crear usuario válido
-POST http://localhost:3000/users
-Content-Type: application/json
-
-{
-  "email": "admin@gestor.com",
-  "password": "123456",
-  "firstName": "Admin",
-  "lastName": "Sistema"
-}
-
-### Crear segundo usuario
-POST http://localhost:3000/users
-Content-Type: application/json
-
-{
-  "email": "dev@gestor.com",
-  "password": "123456",
-  "firstName": "Developer",
-  "lastName": "Team"
-}
-
-### Validación: Email duplicado (debería dar error)
-POST http://localhost:3000/users
-Content-Type: application/json
-
-{
-  "email": "admin@gestor.com",
-  "password": "123456",
-  "firstName": "Duplicado",
-  "lastName": "Usuario"
-}
-
-### ============= EQUIPOS (CRUD + Reglas de Borrado) =============
-
-### Obtener todos los equipos
-GET http://localhost:3000/teams
-
-### Crear equipo de desarrollo
-POST http://localhost:3000/teams
-Content-Type: application/json
-
-{
-  "name": "Equipo Frontend",
-  "description": "Desarrollo de interfaces",
-  "ownerId": 1
-}
-
-### Crear equipo backend
-POST http://localhost:3000/teams
-Content-Type: application/json
-
-{
-  "name": "Equipo Backend",
-  "description": "Desarrollo de APIs",
-  "ownerId": 1
-}
-
-### Crear equipo para eliminar (sin tareas)
-POST http://localhost:3000/teams
-Content-Type: application/json
-
-{
-  "name": "Equipo Temporal",
-  "description": "Este equipo se puede eliminar",
-  "ownerId": 4
-}
-
-### Validación: Propietario inexistente (debería dar error)
-POST http://localhost:3000/teams
-Content-Type: application/json
-
-{
-  "name": "Equipo Error",
-  "ownerId": 999
-}
-
-### ============= MEMBRESÍAS (Alta/Baja/Gestión) =============
-
-### Agregar usuario al equipo frontend
-POST http://localhost:3000/memberships
-Content-Type: application/json
-
-{
-  "userId": 6,
-  "teamId": 1,
-  "role": "miembro"
-}
-
-### Agregar mismo usuario al equipo backend
-POST http://localhost:3000/memberships
-Content-Type: application/json
-
-{
-  "userId": 2,
-  "teamId": 2,
-  "role": "miembro"
-}
-
-### Validación: Usuario duplicado en mismo equipo (debería dar error)
-POST http://localhost:3000/memberships
-Content-Type: application/json
-
-{
-  "userId": 2,
-  "teamId": 1,
-  "role": "propietario"
-}
-
-### Validación: Usuario inexistente (debería dar error)
-POST http://localhost:3000/memberships
-Content-Type: application/json
-
-{
-  "userId": 999,
-  "teamId": 1,
-  "role": "miembro"
-}
-
-### ============= TAREAS (CRUD + Reglas de Negocio) =============
-
-### Obtener todas las tareas
+### ------------------------------------------
+### PASO 1: Ver el estado inicial
+### ------------------------------------------
+### Descripción: Traemos todas las tareas.
+### Fíjate que la Tarea 1 ("Implementar autenticación") está en estado "en_curso".
+### Fíjate que la Tarea 4 ("Documentar API") está "pendiente".
 GET http://localhost:3000/tasks
 
-### Crear tarea pendiente
-POST http://localhost:3000/tasks
-Content-Type: application/json
+### ------------------------------------------
+### PASO 2: Verificar Dependencias existentes
+### ------------------------------------------
+### Descripción: Verificamos que el Seed creó la regla.
+### Deberías ver que la Tarea 4 DEPENDE DE la Tarea 1.
+GET http://localhost:3000/tasks/4/dependencies
 
-{
-  "title": "Configurar autenticación",
-  "description": "Implementar JWT y middleware de auth",
-  "teamId": 1,
-  "createdById": 4,
-  "assignedToId": 4,
-  "priority": "alta",
-  "dueDate": "2025-12-31"
-}
-
-### Crear segunda tarea
-POST http://localhost:3000/tasks
-Content-Type: application/json
-
-{
-  "title": "Diseñar homepage",
-  "description": "Crear diseño de página principal",
-  "teamId": 1,
-  "createdById": 1,
-  "priority": "media",
-  "dueDate": "2025-11-30"
-}
-
-### Crear tarea sin asignar
-POST http://localhost:3000/tasks
-Content-Type: application/json
-
-{
-  "title": "Documentar API",
-  "description": "Crear documentación con Swagger",
-  "teamId": 2,
-  "createdById": 1,
-  "priority": "baja"
-}
-
-### REGLA DE NEGOCIO: Validación fecha pasada (debería dar error)
-POST http://localhost:3000/tasks
-Content-Type: application/json
-
-{
-  "title": "Tarea con fecha inválida",
-  "teamId": 1,
-  "createdById": 1,
-  "dueDate": "2020-01-01"
-}
-
-### ============= TRANSICIONES DE ESTADO (Reglas de Negocio) =============
-
-### VÁLIDA: Pendiente → En curso
-PUT http://localhost:3000/tasks/1
-Content-Type: application/json
-
-{
-  "status": "en_curso"
-}
-
-### VÁLIDA: En curso → Finalizada
-PUT http://localhost:3000/tasks/1
-Content-Type: application/json
-
-{
-  "status": "finalizada"
-}
-
-### INVÁLIDA: Finalizada → Pendiente (debería dar error)
-PUT http://localhost:3000/tasks/1
-Content-Type: application/json
-
-{
-  "status": "pendiente"
-}
-
-### INVÁLIDA: Intentar editar tarea finalizada (debería dar error)
-PUT http://localhost:3000/tasks/1
-Content-Type: application/json
-
-{
-  "title": "Intentando editar tarea finalizada",
-  "description": "Esto debería fallar"
-}
-
-### VÁLIDA: Cambiar segunda tarea a En curso
-PUT http://localhost:3000/tasks/2
-Content-Type: application/json
-
-{
-  "status": "en_curso"
-}
-
-### VÁLIDA: Cualquier estado → Cancelada
-PUT http://localhost:3000/tasks/3
-Content-Type: application/json
-
-{
-  "status": "cancelada"
-}
-
-### INVÁLIDA: Intentar editar tarea cancelada (debería dar error)
-PUT http://localhost:3000/tasks/2
-Content-Type: application/json
-
-{
-  "priority": "alta"
-}
-
-### ============= COMENTARIOS (Historial) =============
-
-### Obtener todos los comentarios
-GET http://localhost:3000/comments
-
-### Agregar comentario a tarea
-POST http://localhost:3000/comments
-Content-Type: application/json
-
-{
-  "content": "Tarea completada exitosamente. Implementación lista para review.",
-  "taskId": 1,
-  "authorId": 4
-}
-
-### Agregar comentario de seguimiento
-POST http://localhost:3000/comments
-Content-Type: application/json
-
-{
-  "content": "Review completado. Necesita ajustes menores en validaciones.",
-  "taskId": 1,
-  "authorId": 1
-}
-
-### Comentario en tarea cancelada
-POST http://localhost:3000/comments
-Content-Type: application/json
-
-{
-  "content": "Tarea cancelada por cambio en prioridades del proyecto.",
-  "taskId": 2,
-  "authorId": 1
-}
-
-### Validación: Comentario en tarea inexistente (debería dar error)
-POST http://localhost:3000/comments
-Content-Type: application/json
-
-{
-  "content": "Comentario en tarea que no existe",
-  "taskId": 999,
-  "authorId": 1
-}
-
-### ============= REGLAS DE BORRADO DE EQUIPOS =============
-
-### Intentar eliminar equipo con tareas activas (debería dar error)
-DELETE http://localhost:3000/teams/2
-
-### Eliminar equipo sin tareas (debería funcionar)
-DELETE http://localhost:3000/teams/3
-
-### ============= CASOS DE VALIDACIÓN ADICIONALES =============
-
-### Crear tarea sin título (debería dar error)
-POST http://localhost:3000/tasks
-Content-Type: application/json
-
-{
-  "description": "Tarea sin título",
-  "teamId": 1,
-  "createdById": 1
-}
-
-### Crear tarea con equipo inexistente (debería dar error)
-POST http://localhost:3000/tasks
-Content-Type: application/json
-
-{
-  "title": "Tarea en equipo inexistente",
-  "teamId": 999,
-  "createdById": 1
-}
-
-### Crear tarea con creador inexistente (debería dar error)
-POST http://localhost:3000/tasks
-Content-Type: application/json
-
-{
-  "title": "Tarea con creador inexistente",
-  "teamId": 1,
-  "createdById": 999
-}
-
-### ============= FLUJO COMPLETO DE PRUEBA =============
-
-### 1. Crear nueva tarea para flujo completo
-POST http://localhost:3000/tasks
-Content-Type: application/json
-
-{
-  "title": "Prueba de flujo completo",
-  "description": "Tarea para probar todo el flujo de estados",
-  "teamId": 1,
-  "createdById": 1,
-  "assignedToId": 2,
-  "priority": "media",
-  "dueDate": "2025-12-15"
-}
-
-### 2. Comentar tarea recién creada
-POST http://localhost:3000/comments
-Content-Type: application/json
-
-{
-  "content": "Iniciando trabajo en esta tarea",
-  "taskId": 4,
-  "authorId": 2
-}
-
-### 3. Cambiar a en curso
+### ------------------------------------------
+### PASO 3: LA PRUEBA DE FUEGO (Debe dar ERROR) 🔴
+### ------------------------------------------
+### Descripción: Intentamos finalizar la Tarea 4 ("Documentar").
+### LÓGICA: Como depende de la Tarea 1 (que sigue "en_curso"), el sistema NO DEBE DEJARNOS.
+### ESPERADO: Status 409 Conflict o 400 Bad Request. Mensaje: "No puedes cerrar... depende de Implementar autenticación"
 PUT http://localhost:3000/tasks/4
 Content-Type: application/json
 
 {
-  "status": "en_curso"
+  "status": "finalizada",
+  "modifiedBy": 1
 }
 
-### 4. Comentar progreso
-POST http://localhost:3000/comments
+### ------------------------------------------
+### PASO 4: Resolver el bloqueo (Debe dar ÉXITO) 🟢
+### ------------------------------------------
+### Descripción: Vamos a terminar la Tarea 1 ("Autenticación") para liberar el camino.
+### ESPERADO: Status 200 OK. Tarea actualizada a "finalizada".
+PUT http://localhost:3000/tasks/1
 Content-Type: application/json
 
 {
-  "content": "50% completado, todo va según lo planeado",
-  "taskId": 4,
-  "authorId": 2
+  "status": "finalizada",
+  "modifiedBy": 1
 }
 
-### 5. Finalizar tarea
+### ------------------------------------------
+### PASO 5: Reintentar la Tarea Bloqueada (Debe dar ÉXITO) 🟢
+### ------------------------------------------
+### Descripción: Ahora que la Tarea 1 está lista, volvemos a intentar cerrar la Tarea 4.
+### LÓGICA: El sistema revisa, ve que la dependencia (Tarea 1) ya está "finalizada", y nos da permiso.
+### ESPERADO: Status 200 OK.
 PUT http://localhost:3000/tasks/4
 Content-Type: application/json
 
 {
-  "status": "finalizada"
+  "status": "finalizada",
+  "modifiedBy": 1
 }
 
-### 6. Comentario final
-POST http://localhost:3000/comments
+### ------------------------------------------
+### PASO 6: Verificar Historial (Auditoría)
+### ------------------------------------------
+### Descripción: Veamos el chisme. ¿Quedó registrado que cambiamos la Tarea 1 en el Paso 4?
+### ESPERADO: Un JSON con una entrada "action": "CAMBIO_ESTADO", "description": "Cambió... a finalizada".
+GET http://localhost:3000/tasks/1/history
+
+### ------------------------------------------
+### PASO 7: Prueba de CICLOS INFINITOS (Debe dar ERROR) 🔴
+### ------------------------------------------
+### Contexto: Vamos a crear un conflicto.
+### A. Creamos Tarea A
+POST http://localhost:3000/tasks
 Content-Type: application/json
 
-{
-  "content": "Tarea completada y revisada. Lista para producción.",
-  "taskId": 4,
-  "authorId": 1
-}
+{ "title": "Tarea A", "teamId": 1, "createdById": 1 }
 
-### ============= VERIFICACIONES FINALES =============
+### B. Creamos Tarea B
+POST http://localhost:3000/tasks
+Content-Type: application/json
 
-### Ver todas las tareas con sus estados
-GET http://localhost:3000/tasks
+{ "title": "Tarea B", "teamId": 1, "createdById": 1 }
 
-### Ver todos los comentarios del sistema
-GET http://localhost:3000/comments
+### C. Hacemos que B dependa de A (Esto funciona 🟢)
+### Nota: Asumimos que Tarea A es ID 5 y Tarea B es ID 6. Si fallan los IDs, revisa el GET del Paso 1.
+POST http://localhost:3000/tasks/6/dependencies
+Content-Type: application/json
 
-### Ver todos los equipos
-GET http://localhost:3000/teams
+{ "targetTaskId": 5, "type": "DEPENDS_ON" }
 
-### Ver todas las membresías
-GET http://localhost:3000/memberships
+### D. INTENTAMOS EL CICLO: Hacer que A dependa de B (Esto falla 🔴)
+### LÓGICA: Si B depende de A, A no puede depender de B. Sería infinito.
+### ESPERADO: Error 400/500 "Ciclo detectado" o similar.
+POST http://localhost:3000/tasks/5/dependencies
+Content-Type: application/json
+
+{ "targetTaskId": 6, "type": "DEPENDS_ON" }
